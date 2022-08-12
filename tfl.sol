@@ -1,6 +1,3 @@
-/**
- *Submitted for verification at FtmScan.com on 2022-07-09
-*/
 
 // SPDX-License-Identifier: GPL-3.0
 
@@ -1260,16 +1257,17 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
 pragma solidity >=0.7.0 <0.9.0;
 
 
-contract TFL is ERC721Enumerable, Ownable {
+contract TflTest is ERC721Enumerable, Ownable {
   using Strings for uint256;
   string public baseURI;
   string public baseExtension = ".json";
   string public hiddenMetadataUri;
   uint256 public maxSupply = 6969;
-
+    uint constant FIRST_MINTING_DATE = 1660307400; 
+    uint constant SECOND_MINTING_DATE = 1660393800; 
   uint256 public maxMintAmount = 3; // 5 For WL users
   uint8 public maxMintAmountForWhiteListed = 5;
-//   address private devAddress = ; //INSERT
+  address private devAddress = 0x2c61EdA9B67A82d478fE7070E8d83FeF743E0054; 
     mapping(address=>uint8) public buyers; 
     mapping(address=>uint8) private _whiteList;
     address[] _whitelist = [0x1355918bA35c5CE697447af88d72F4A6B016C530,
@@ -1425,9 +1423,12 @@ contract TFL is ERC721Enumerable, Ownable {
 0xeECCB56425649b309eec35cE90f6F91E8b06B099,
 0x8a2D0024b539fF93E361DFeD2144C3114384E030,
 0xC83c036517Cf50C27cc6C5a96Cd46745B4E9134D,
+0x09371EdA619f6B2D6D2f50f092b3dd99104F3713,
 0x988b2a936bD84b2c78A0eC234821A87AA64e6Aa6,
 0x2c61EdA9B67A82d478fE7070E8d83FeF743E0054,
-0x688DAb4b3923Cd7a91c45bC77B1Fa9E59F2ac3D3];
+0x688DAb4b3923Cd7a91c45bC77B1Fa9E59F2ac3D3,
+0xa130941Ea504D6EfBE0E0259F9b3fFBc8a29F2aA,
+0x114cb77F20b5A83dca01DF67f9F65da91e03a174];
 
   bool public paused = false;
   bool public revealed = false;
@@ -1449,6 +1450,13 @@ contract TFL is ERC721Enumerable, Ownable {
      function _baseURI() internal view virtual override returns (string memory) {
     return baseURI;
   }
+  
+   function reserveForGiveaway(address giveawayAddress, uint256 amount) public onlyOwner {
+    uint256 supply = totalSupply();
+    for (uint256 i = 1; i <= amount; i++) {
+      _safeMint(giveawayAddress, supply + i);
+    }
+  }
 
   function mint (address _to, uint8 _mintAmount) public payable {
     uint256 supply = totalSupply();
@@ -1457,11 +1465,13 @@ contract TFL is ERC721Enumerable, Ownable {
     require(!paused,"Minting is paused");
     require(_mintAmount > 0,"Mint amount must be greater than 0");
     if(_whiteList[_to]>0){
+        require(block.timestamp>= FIRST_MINTING_DATE, "Sorry the WL mint has not began yet");
         mintAmount = _whiteList[_to];
         isWhiteListed = true;
         _whiteList[_to] -=_mintAmount;
     }
     if (!isWhiteListed){
+        require(block.timestamp>= SECOND_MINTING_DATE, "Sorry non WL mint has not began yet");
         require(balanceOf(_to)<3, "You can only have 3 NFTs");
     }
     require(_mintAmount <= mintAmount,"You can mint a max of 3");
@@ -1514,17 +1524,10 @@ contract TFL is ERC721Enumerable, Ownable {
 
     string memory currentBaseURI = _baseURI();
 
-     string memory websiteBaseURI = "URI LINK";
-    if(keccak256(bytes(currentBaseURI)) == keccak256(bytes(websiteBaseURI))) {
-      return bytes(currentBaseURI).length > 0
-          ? string(abi.encodePacked(currentBaseURI, tokenId.toString()))
-          : "";
-    }
-    else {
-      return bytes(currentBaseURI).length > 0
-          ? string(abi.encodePacked(currentBaseURI, tokenId.toString(), ".json"))
-          : "";
-    } 
+    
+    return bytes(currentBaseURI).length > 0
+        ? string(abi.encodePacked(currentBaseURI, tokenId.toString(), baseExtension))
+        : "";
   }        
 
    
@@ -1549,7 +1552,7 @@ contract TFL is ERC721Enumerable, Ownable {
 
   function withdraw() public onlyOwner {
     uint256 balance = address(this).balance;
-    // payable(devAddress).transfer(balance);
+     payable(devAddress).transfer(balance);
   }
 
  
